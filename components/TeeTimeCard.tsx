@@ -1,31 +1,32 @@
-// components/TeeTimeCard.tsx
 import { Colors } from "@/constants/Colors";
 import { Spacing } from "@/constants/spacing";
-import type { TeeTime } from "@/types";
+import type { TeeTime } from "@/types/index";
 import { FontAwesome5 } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Card from "./Card";
 
 type TeeTimeCardProps = {
-  teeTime: TeeTime;
+  booking: TeeTime;
 };
 
-export default function TeeTimeCard({ teeTime }: TeeTimeCardProps) {
+export default function TeeTimeCard({ booking }: TeeTimeCardProps) {
+  const date = new Date(booking.start_time);
+  const formattedTime = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  const formattedDay = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+
   return (
     <Card>
       <View style={styles.header}>
-        <Text style={styles.time}>{teeTime.time}</Text>
-        <View style={[styles.status, { backgroundColor: teeTime.isConfirmed ? Colors.primary : "#FFA726" }]}>
-          <Text style={styles.statusText}>{teeTime.isConfirmed ? "Confirmed" : "Pending"}</Text>
+        <Text style={styles.time}>{formattedTime}</Text>
+        <View style={styles.playersContainer}>
+          <FontAwesome5 name="users" size={16} color={Colors.text} />
+          <Text style={styles.playersText}>
+            {booking.players_count} Player{booking.players_count > 1 ? "s" : ""}
+          </Text>
         </View>
       </View>
-      <Text style={styles.day}>{teeTime.day}</Text>
-      <View style={styles.divider} />
-      <View style={styles.playersContainer}>
-        <FontAwesome5 name="users" size={16} color={Colors.text} />
-        <Text style={styles.playersText}>{teeTime.players.join(", ")}</Text>
-      </View>
+      <Text style={styles.day}>{formattedDay}</Text>
     </Card>
   );
 }
@@ -42,34 +43,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: Colors.text,
   },
-  status: {
-    borderRadius: 12,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-  },
-  statusText: {
-    color: Colors.white,
-    fontWeight: "600",
-    fontSize: 12,
-  },
   day: {
     fontSize: 16,
     color: "#666",
-    marginBottom: Spacing.md,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#E0E0E0",
-    marginVertical: Spacing.sm,
   },
   playersContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: Spacing.sm,
+    backgroundColor: "#f0f0f0",
+    paddingVertical: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: 8,
   },
   playersText: {
     marginLeft: Spacing.sm,
     fontSize: 14,
+    fontWeight: "600",
     color: Colors.text,
   },
 });

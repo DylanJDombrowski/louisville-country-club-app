@@ -1,8 +1,6 @@
-// types/index.ts
 export type TeeTime = {
   id: string;
-  time: string;
-  day: string;
-  players: string[];
-  isConfirmed: boolean;
+  start_time: string;
+  players_count: number;
+  notes: string | null;
 };
