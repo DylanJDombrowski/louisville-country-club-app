@@ -1,59 +1,44 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { Colors } from "@/constants/Colors";
+import { Slot, useRouter, useSegments } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
+import AuthProvider, { useAuth } from "./providers/AuthProvider";
 
-import { useColorScheme } from '@/components/useColorScheme';
-
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+const InitialLayout = () => {
+  const { session, loading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    if (loading) return;
+
+    // Check if the user is in the main '(tabs)' group
+    const inTabsGroup = segments[0] === "(tabs)";
+
+    if (session && !inTabsGroup) {
+      // Redirect to the main app home screen
+      router.replace("/(tabs)/home");
+    } else if (!session) {
+      // Redirect to the sign-in screen
+      router.replace("/sign-in" as any);
     }
-  }, [loaded]);
+  }, [session, loading]);
 
-  if (!loaded) {
-    return null;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
   }
 
-  return <RootLayoutNav />;
-}
+  return <Slot />;
+};
 
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-
+export default function RootLayout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+    <AuthProvider>
+      <InitialLayout />
+    </AuthProvider>
   );
 }
