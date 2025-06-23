@@ -1,44 +1,51 @@
+// app/(tabs)/_layout.tsx
 import { Colors } from "@/constants/Colors";
-import { Slot, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native";
-import AuthProvider, { useAuth } from "./providers/AuthProvider";
+import { FontAwesome5 } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import React from "react";
 
-const InitialLayout = () => {
-  const { session, loading } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (loading) return;
-
-    // Check if the user is in the main '(tabs)' group
-    const inTabsGroup = segments[0] === "(tabs)";
-
-    if (session && !inTabsGroup) {
-      // Redirect to the main app home screen
-      router.replace("/(tabs)/home");
-    } else if (!session) {
-      // Redirect to the sign-in screen
-      router.replace("/sign-in" as any);
-    }
-  }, [session, loading]);
-
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
-
-  return <Slot />;
-};
-
-export default function RootLayout() {
+export default function TabLayout() {
   return (
-    <AuthProvider>
-      <InitialLayout />
-    </AuthProvider>
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors.primary,
+        headerStyle: {
+          backgroundColor: Colors.primary,
+        },
+        headerTintColor: Colors.white,
+      }}
+    >
+      {/* This sets the Tee Times tab as the default screen for the (tabs) layout */}
+      <Tabs.Screen name="index" options={{ href: null }} />
+
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color }) => <FontAwesome5 name="home" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="tee-times"
+        options={{
+          title: "Tee Times",
+          tabBarIcon: ({ color }) => <FontAwesome5 name="golf-ball" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="dining"
+        options={{
+          title: "Dining",
+          tabBarIcon: ({ color }) => <FontAwesome5 name="utensils" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color }) => <FontAwesome5 name="user-alt" size={24} color={color} />,
+        }}
+      />
+    </Tabs>
   );
 }
