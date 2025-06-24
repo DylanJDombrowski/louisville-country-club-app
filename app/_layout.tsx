@@ -1,51 +1,83 @@
-// app/(tabs)/_layout.tsx
-import { Colors } from "@/constants/Colors";
-import { FontAwesome5 } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import React from "react";
+// File: app/_layout.tsx
 
-export default function TabLayout() {
+import AuthProvider, { useAuth } from "@/app/providers/AuthProvider";
+import { useFonts } from "expo-font";
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import React, { useEffect } from "react";
+import "react-native-reanimated";
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
+function InitialLayout() {
+  const { session, loading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Hide the splash screen once fonts are loaded and auth state is determined
+    if (!loading) {
+      SplashScreen.hideAsync();
+    }
+
+    // Wait until the auth state is fully loaded
+    if (loading) {
+      return;
+    }
+
+    const inAuthGroup = segments[0] === "(auth)";
+    const inTabsGroup = segments[0] === "(tabs)";
+
+    if (session && !inTabsGroup) {
+      // Redirect authenticated users to the main app (tabs) if they are not already there.
+      router.replace("/(tabs)/home");
+    } else if (!session && !inAuthGroup) {
+      // Redirect unauthenticated users to the sign-in screen.
+      router.replace("/sign-in");
+    }
+  }, [session, loading, segments, router]);
+
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        headerStyle: {
-          backgroundColor: Colors.primary,
-        },
-        headerTintColor: Colors.white,
-      }}
-    >
-      {/* This sets the Tee Times tab as the default screen for the (tabs) layout */}
-      <Tabs.Screen name="index" options={{ href: null }} />
+    <Stack>
+      {/* The main tab navigator is nested inside the stack */}
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <FontAwesome5 name="home" size={24} color={color} />,
-        }}
+      {/* Define the modal screen with a modal presentation style */}
+      <Stack.Screen
+        name="modal"
+        options={{ presentation: "modal", title: "Information" }}
       />
-      <Tabs.Screen
-        name="tee-times"
-        options={{
-          title: "Tee Times",
-          tabBarIcon: ({ color }) => <FontAwesome5 name="golf-ball" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="dining"
-        options={{
-          title: "Dining",
-          tabBarIcon: ({ color }) => <FontAwesome5 name="utensils" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => <FontAwesome5 name="user-alt" size={24} color={color} />,
-        }}
-      />
-    </Tabs>
+
+      {/* Define other screens that can be pushed onto the stack */}
+      <Stack.Screen name="book-tee-time" options={{ title: "Book Tee Time" }} />
+      <Stack.Screen name="book-dining" options={{ title: "Book Dining" }} />
+
+      {/* Define authentication screens, hiding the header for a custom UI */}
+      <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+      <Stack.Screen name="sign-up" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  const [loaded, error] = useFonts({
+    // You can add custom fonts here if needed in the future
+  });
+
+  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
+
+  if (!loaded) {
+    return null; // Return null while fonts are loading, Splash Screen is visible
+  }
+
+  return (
+    // The AuthProvider wraps the entire app, making auth state available everywhere
+    <AuthProvider>
+      <InitialLayout />
+    </AuthProvider>
   );
 }
